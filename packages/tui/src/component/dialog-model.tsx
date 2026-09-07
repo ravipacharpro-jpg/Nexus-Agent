@@ -60,6 +60,7 @@ export function DialogModel(props: { providerID?: string }) {
 
     const providerOptions = pipe(
       sync.data.provider,
+      filter((provider) => provider.id !== "omniroute"),
       sortBy(
         (provider) => provider.id !== "nexus",
         (provider) => provider.name,

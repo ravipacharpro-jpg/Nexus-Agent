@@ -23,6 +23,7 @@ const PROVIDER_PRIORITY: Record<string, number> = {
   "github-copilot": 3,
   anthropic: 4,
   google: 5,
+  opencode: 6,
 }
 
 const CUSTOM_PROVIDER_OPTION_VALUE = "__nexus_custom_provider__"
@@ -48,6 +49,7 @@ export function providerOptions(list: { id: string; name: string }[]): ProviderO
   return [
     ...pipe(
       list,
+      (items) => items.filter((x) => x.id !== "omniroute"),
       sortBy(
         (x) => PROVIDER_PRIORITY[x.id] ?? 99,
         (x) => x.name.toLowerCase(),
@@ -63,6 +65,7 @@ export function providerOptions(list: { id: string; name: string }[]): ProviderO
           anthropic: "(API key)",
           openai: "(ChatGPT Plus/Pro or API key)",
           "nexus-go": "Low cost subscription for everyone",
+          opencode: "(OpenCode login; free models)",
         }[provider.id],
         category: provider.id in PROVIDER_PRIORITY ? "Popular" : "Providers",
       })),
