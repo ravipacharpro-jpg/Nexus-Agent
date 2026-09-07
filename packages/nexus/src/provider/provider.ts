@@ -1975,7 +1975,9 @@ const layer = Layer.effect(
         const options = { ...provider.options }
 
         const rotatedKey = s.rotation.next(model.providerID)
-        if (options["apiKey"] === undefined && rotatedKey) options["apiKey"] = rotatedKey
+        // Explicitly configured rotating keys win over a provider OAuth default.
+        // This keeps multiple keys for the same provider/model fully active.
+        if (rotatedKey) options["apiKey"] = rotatedKey
         if (options["apiKey"] === undefined && provider.key) options["apiKey"] = provider.key
 
         if (
