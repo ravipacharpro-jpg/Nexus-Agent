@@ -1,7 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/bash
 set -euo pipefail
 
-REPO="ravipacharpro-jpg/nexus-fixed"
+REPO="ravipacharpro-jpg/Nexus-Agent"
 INSTALLER_URL="https://raw.githubusercontent.com/${REPO}/dev/install.sh"
 CURRENT_STEP="starting"
 

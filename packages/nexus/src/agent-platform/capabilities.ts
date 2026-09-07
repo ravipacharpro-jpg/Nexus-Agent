@@ -33,7 +33,7 @@ export function detectAgentCapabilities(env: NodeJS.ProcessEnv = process.env): A
     ? commandAvailable("termux-open-url")
     : anyCommand(process.platform === "win32" ? ["start"] : process.platform === "darwin" ? ["open"] : ["xdg-open"])
   const browserHttpInspection = typeof globalThis.fetch === "function"
-  const browserAutomation = anyCommand(["playwright", "chromium", "google-chrome", "google-chrome-stable", "chrome"])
+  const browserAutomation = anyCommand(["nexus-browser", "playwright", "chromium", "google-chrome", "google-chrome-stable", "chrome"])
   const packageManagers = ["bun", "npm", "pnpm", "yarn"].filter((command) => commandAvailable(command))
   const android = anyCommand(["adb", "emulator", "sdkmanager", "gradle"])
   const androidDevice =

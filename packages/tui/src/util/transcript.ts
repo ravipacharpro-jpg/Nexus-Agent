@@ -54,7 +54,7 @@ export function formatMessage(
   let result = ""
 
   if (msg.role === "user") {
-    result += `## User\n\n`
+    result += `## you\n\n`
   } else {
     result += formatAssistantHeader(msg, options.assistantMetadata, providers ?? options.providers)
   }
@@ -72,7 +72,7 @@ export function formatAssistantHeader(
   providers?: Provider[] | ReadonlyMap<string, Provider>,
 ): string {
   if (!includeMetadata) {
-    return `## Assistant\n\n`
+    return `## Agent\n\n`
   }
 
   const duration =
@@ -80,7 +80,7 @@ export function formatAssistantHeader(
 
   const modelName = Model.name(providers, msg.providerID, msg.modelID)
 
-  return `## Assistant (${Locale.titlecase(msg.agent)} · ${modelName}${duration ? ` · ${duration}` : ""})\n\n`
+  return `## Agent (${Locale.titlecase(msg.agent)} · ${modelName}${duration ? ` · ${duration}` : ""})\n\n`
 }
 
 export function formatPart(part: Part, options: TranscriptOptions): string {

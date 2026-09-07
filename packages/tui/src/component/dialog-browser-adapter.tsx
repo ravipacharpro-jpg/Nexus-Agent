@@ -4,7 +4,6 @@ import { useDialog } from "../ui/dialog"
 import { useTheme } from "../context/theme"
 import { useToast } from "../ui/toast"
 import { useKV } from "../context/kv"
-import { TextAttributes } from "@opentui/core"
 
 type BrowserMode = "minimal" | "balanced" | "full"
 
@@ -69,9 +68,9 @@ export function DialogBrowserAdapter() {
       category: item.recommended ? "Recommended" : item.mode === "full" ? "Power users" : "Balanced",
       footer:
         currentMode() === item.mode ? (
-          <span style={{ fg: theme.success, attributes: TextAttributes.BOLD }}>✓ Selected</span>
+          <text fg={theme.success}>✓ Selected</text>
         ) : (
-          <span style={{ fg: theme.textMuted }}>○ Not selected</span>
+          <text fg={theme.textMuted}>○ Not selected</text>
         ),
       onSelect: () => {
         handleSelect(item.mode)
@@ -96,7 +95,8 @@ export function DialogBrowserAdapter() {
       return
     }
     kv.set("browser_adapter_mode", mode)
-    kv.set("browser_adapter_installed", false)
+    // Note: install state is owned by `nexus doctor` (wrapper + venv on disk).
+    // KV only stores the selected mode; scripts cannot update KV.
     toast.show({
       variant: "info",
       title: "Browser Adapter Selected",

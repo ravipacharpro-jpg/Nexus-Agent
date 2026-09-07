@@ -23,8 +23,8 @@ Options:
         --no-modify-path    Don't modify shell config files (.zshrc, .bashrc, etc.)
 
 Examples:
-    curl -fsSL https://raw.githubusercontent.com/itzgeniusboy/nexus/main/install.sh | bash
-    curl -fsSL https://raw.githubusercontent.com/itzgeniusboy/nexus/main/install.sh | bash -s -- --version 0.1.5
+    curl -fsSL https://raw.githubusercontent.com/ravipacharpro-jpg/Nexus-Agent/dev/install.sh | bash
+    curl -fsSL https://raw.githubusercontent.com/ravipacharpro-jpg/Nexus-Agent/dev/install.sh | bash -s -- --version 0.1.5
     ./install.sh --binary /path/to/nexus
 EOF
 }

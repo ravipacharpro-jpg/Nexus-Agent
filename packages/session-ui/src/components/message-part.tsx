@@ -1228,8 +1228,10 @@ export function UserMessageDisplay(props: {
 
   const metaHead = createMemo(() => {
     const agent = props.message.agent
-    const items = [agent ? agent[0]?.toUpperCase() + agent.slice(1) : "", model()]
-    return items.filter((x) => !!x).join("\u00A0\u00B7\u00A0")
+    // User-requested chat tag: show "you" for user messages.
+    const label = agent && agent.toLowerCase() === "user" ? "you" : agent ? agent[0]?.toUpperCase() + agent.slice(1) : ""
+    const items = [label, model()]
+    return items.filter((x) => !!x).join(" · ")
   })
 
   const metaTail = stamp
@@ -1693,12 +1695,14 @@ PART_MAPPING["text"] = function TextPartDisplay(props) {
     if (props.message.role !== "assistant") return ""
     const agent = (props.message as AssistantMessage).agent
     const items = [
+      // User-requested chat tag: show "Agent" in front of agent messages.
+      "Agent",
       agent ? agent[0]?.toUpperCase() + agent.slice(1) : "",
       model(),
       duration(),
       interrupted() ? i18n.t("ui.message.interrupted") : "",
     ]
-    return items.filter((x) => !!x).join(" \u00B7 ")
+    return items.filter((x) => !!x).join(" · ")
   })
 
   const streaming = createMemo(

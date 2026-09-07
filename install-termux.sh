@@ -5,7 +5,7 @@ set -euo pipefail
 # users to the fixed-release installer that does not require Bun/source builds.
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 LOCAL_INSTALLER="$SCRIPT_DIR/install-termux-easy.sh"
-REMOTE_INSTALLER="https://raw.githubusercontent.com/ravipacharpro-jpg/nexus-fixed/dev/install-termux-easy.sh"
+REMOTE_INSTALLER="https://raw.githubusercontent.com/ravipacharpro-jpg/Nexus-Agent/dev/install-termux-easy.sh"
 
 if [ -f "$LOCAL_INSTALLER" ]; then
   exec bash "$LOCAL_INSTALLER" "$@"
