@@ -204,11 +204,22 @@ else
     fi
 
     if [ -z "$requested_version" ]; then
-        specific_version=$(curl -fsSL --retry 3 --connect-timeout 5 "https://api.github.com/repos/$REPO/releases/latest" | sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p')
+        # Use a User-Agent so the GitHub redirect and rate-limit responses are
+        # easier to recognise. -L follows the repo rename redirect, and we
+        # explicitly discard the noisy "Moved Permanently" payload.
+        local api_response
+        api_response=$(curl -fsSL --retry 3 --connect-timeout 5 -A "nexus-installer" "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null || true)
+        specific_version=$(printf '%s' "$api_response" | sed -n 's/.*"tag_name":[[:space:]]*"v\?\([^"]*\)".*/\1/p' | head -1)
+        # Reject anything that is not a sane semver (rate-limit messages and
+        # redirect bodies can otherwise leak through the sed fallback).
+        if [[ ! "$specific_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-].+)?$ ]]; then
+            specific_version=""
+        fi
         if [[ -z "$specific_version" ]]; then
             specific_version=$(curl -fsSL --retry 3 --connect-timeout 5 "https://github.com/$REPO/releases.atom" | grep -o 'tag/v[0-9]*\.[0-9]*\.[0-9]*' | head -1 | sed 's/tag\/v//')
-            if [[ -z "$specific_version" ]]; then
+            if [[ ! "$specific_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-].+)?$ ]]; then
                 echo -e "${RED}Failed to fetch the latest NEXUS version${NC}"
+                echo -e "${MUTED}Check connectivity or pass --version explicitly.${NC}"
                 exit 1
             fi
         fi
@@ -255,7 +266,10 @@ print_message() {
 
 check_version() {
     if command -v "$APP" >/dev/null 2>&1; then
-        installed_version=$("$APP" --version 2>/dev/null | tr -d 'v' | awk '{print $1}' || echo "")
+        # Grep the first semver-shaped token (with optional leading "v") so we
+        # do not choke on debug builds that print "0.0.0--202609060746" or on
+        # release builds that append commit info like "0.1.11 (commit abc)".
+        installed_version=$("$APP" --version 2>/dev/null | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9.-]+)?' | head -1 | tr -d 'v' || echo "")
 
         if [[ "$installed_version" == "$specific_version" ]]; then
             # On Termux, ensure the wrapper has the LD_PRELOAD fix before skipping
@@ -394,7 +408,18 @@ EOF
 
 download_and_install() {
     print_message info "\n${MUTED}Installing ${NC}NEXUS ${MUTED}version: ${NC}$specific_version"
-    local tmp_dir="${TMPDIR:-/tmp}/dev_hub_install_$$"
+    # Honor TMPDIR, fall back to Termux prefix tmp when available, then /tmp.
+    # /tmp is read-only on stock Termux without proot, so the Termux prefix
+    # must take precedence on that platform to avoid EROFS during download.
+    local tmp_parent
+    if [ -n "${TMPDIR:-}" ]; then
+        tmp_parent="$TMPDIR"
+    elif [[ "${PREFIX:-}" == */com.termux/files/usr ]] || [[ "${TERMUX_VERSION:-}" != "" ]]; then
+        tmp_parent="${PREFIX:-/data/data/com.termux/files/usr}/tmp"
+    else
+        tmp_parent="/tmp"
+    fi
+    local tmp_dir="$tmp_parent/dev_hub_install_$$"
     mkdir -p "$tmp_dir"
 
     if ! curl -fL --retry 3 --connect-timeout 15 -# -o "$tmp_dir/$filename" "$url"; then
