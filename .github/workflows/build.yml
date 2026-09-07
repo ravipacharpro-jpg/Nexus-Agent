@@ -16,7 +16,7 @@ jobs:
         with:
           bun-version: 1.4.0
       - run: bun install
-      - run: bun ./packages/nexus/script/build.ts --single --target=linux-arm64 2>&1 | tail -100
+      - run: NEXUS_VERSION="${GITHUB_REF_NAME#v}" NEXUS_RELEASE=1 bun ./packages/nexus/script/build.ts --single --target=linux-arm64 2>&1 | tail -100
       - run: ls -R packages/nexus/dist/ 2>&1 | head -30
       - uses: actions/upload-artifact@v4
         with:
