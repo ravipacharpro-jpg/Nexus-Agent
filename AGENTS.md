@@ -159,3 +159,15 @@ const table = sqliteTable("session", {
 - Keep delivery vocabulary explicit. Prompts steer by default and promote at the next safe provider-turn boundary while the current drain requires continuation. An explicit `queue` input remains pending until the Session would otherwise become idle; promote one queued input at that boundary, then reevaluate continuation before promoting another. Promoting any new user input resets the selected agent's provider-turn allowance; a batch of steers resets it once.
 - Keep EventV2 replay owner claims separate from clustered Session execution ownership.
 - Keep the System Context algebra, registry, and built-ins in `src/system-context`; keep Context Source producers with their observed domains, and keep Session History selection plus Context Epoch persistence Session-owned.
+
+## Termux Compatibility
+
+These rules are auto-discovered from runtime failures on Termux and apply anywhere Termux may run (install scripts, package code, CI):
+
+- `/tmp` is read-only on stock Termux without proot. Always honor `TMPDIR`, then fall back to `${PREFIX:-/data/data/com.termux/files/usr}/tmp`, only then `/tmp`. Detect Termux via `${PREFIX:-}` ending in `com.termux/files/usr` OR a non-empty `${TERMUX_VERSION:-}`.
+- The shell helper `/usr/bin/env` is **not** on Termux by default; `env` lives at `${PREFIX}/bin/env` (a symlink to coreutils). Scripts and shebangs that hardcode `/usr/bin/env` will fail with `bad interpreter`. Run the bundled shebang through `${PREFIX}/bin/env` or invoke the node/binary directly.
+- `tsgo` from `@typescript/native-preview` ships a `/usr/bin/env node` shebang. On Termux, run it as `${PREFIX}/bin/env node node_modules/@typescript/native-preview/bin/tsgo.js --noEmit` instead, or fall back to `bun build` for sanity.
+- `bash -n` is the cheapest install-script lint. CI already runs it on `scripts/install-browser-*.sh`; mirror that for every new `install*.sh`.
+- `mktemp` should always pass an explicit template; never call bare `mktemp` on Termux because some package builds strip the default `/tmp` template.
+- The Termux glibc loader lives at `${PREFIX}/glibc/bin/ld.so` and forwards to `${PREFIX}/glibc/lib/ld-linux-aarch64.so.1`. `glibc-runner` exposes the `grun` command; the canonical wrapper in `install.sh` searches both layout variants and exits 1 with a remediation hint when neither is present.
+- Treat the open `nexus` command, `~/.nexus/api-vault.json`, and `~/.nexus/logs/` as a single trust boundary: never hardcode credentials, never trust empty `logs/`, and use `--print-logs --log-level DEBUG` when reproducing silent TUI failures.
