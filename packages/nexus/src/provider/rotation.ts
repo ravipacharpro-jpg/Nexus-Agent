@@ -151,7 +151,7 @@ export const PREFERRED_MODELS = {
   google: ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.5-flash"],
   deepseek: ["deepseek-chat", "deepseek-reasoner"],
   cerebras: ["llama3.3-70b", "llama3.1-8b"],
-  opencode: ["grok-code-fast-1"],
+  opencode: ["grok-build-0.1", "grok-4.6", "grok-4.5"],
   openai: ["gpt-4o-mini", "gpt-4.1-mini"],
   anthropic: ["claude-sonnet-4-5", "claude-haiku-4-5", "claude-3-5-haiku-latest"],
   xai: ["grok-4", "grok-code-fast-1", "grok-3-mini"],

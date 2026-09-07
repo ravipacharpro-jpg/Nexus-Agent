@@ -351,13 +351,16 @@ function selectBedrockMantleLanguageModel(sdk: BundledSDK, modelID: string) {
 function custom(dep: CustomDep): Record<string, CustomLoader> {
   const publicCatalog = Effect.fnUntraced(function* (input: Info) {
     const env = yield* dep.env()
+    const auth = yield* dep.auth(input.id)
     const hasKey = iife(() => {
       if (input.env.some((item) => env[item])) return true
       return false
     })
+    const oauthToken = auth?.type === "oauth" ? auth.access : undefined
+    const apiCredential = auth?.type === "api" ? auth.key : undefined
     const ok =
       hasKey ||
-      Boolean(yield* dep.auth(input.id)) ||
+      Boolean(auth) ||
       Boolean((yield* dep.config()).provider?.[input.id]?.options?.apiKey)
 
     if (!ok) {
@@ -378,7 +381,8 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
     return {
       autoload: Object.keys(input.models).length > 0,
       options: {
-        ...(ok || allowsUnauthenticatedRequests ? {} : { apiKey: "public" }),
+        ...(oauthToken ? { apiKey: oauthToken } : apiCredential ? { apiKey: apiCredential } : {}),
+        ...(ok || allowsUnauthenticatedRequests || oauthToken ? {} : { apiKey: "public" }),
         ...(endpoint ? { baseURL: endpoint.replace(/\/$/, "") } : {}),
       },
     }
