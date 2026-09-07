@@ -207,7 +207,6 @@ else
         # Use a User-Agent so the GitHub redirect and rate-limit responses are
         # easier to recognise. -L follows the repo rename redirect, and we
         # explicitly discard the noisy "Moved Permanently" payload.
-        local api_response
         api_response=$(curl -fsSL --retry 3 --connect-timeout 5 -A "nexus-installer" "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null || true)
         specific_version=$(printf '%s' "$api_response" | sed -n 's/.*"tag_name":[[:space:]]*"v\?\([^"]*\)".*/\1/p' | head -1)
         # Reject anything that is not a sane semver (rate-limit messages and
