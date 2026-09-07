@@ -11,8 +11,8 @@ import { TRUNCATION_DIR } from "./truncation-dir"
 
 const RETENTION = Duration.days(7)
 
-export const MAX_LINES = 2000
-export const MAX_BYTES = 50 * 1024
+export const MAX_LINES = 60
+export const MAX_BYTES = 2 * 1024
 export const DIR = TRUNCATION_DIR
 export const GLOB = path.join(TRUNCATION_DIR, "*")
 
@@ -86,12 +86,19 @@ const layer = Layer.effect(
       const resolved = yield* limits()
       const maxLines = options.maxLines ?? resolved.maxLines
       const maxBytes = options.maxBytes ?? resolved.maxBytes
-      const direction = options.direction ?? "head"
+      const direction = options.direction ?? "tail"
       const lines = text.split("\n")
       const totalBytes = Buffer.byteLength(text, "utf-8")
 
+      // Always save full output to disk for LLM recovery via read tool.
+      const savedFile = yield* write(text).pipe(Effect.catch(() => Effect.succeed("")))
+
       if (lines.length <= maxLines && totalBytes <= maxBytes) {
-        return { content: text, truncated: false } as const
+        return {
+          content: text,
+          truncated: false,
+          outputPath: savedFile || undefined,
+        } as Result
       }
 
       const out: string[] = []

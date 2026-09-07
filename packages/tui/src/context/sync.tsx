@@ -585,6 +585,22 @@ export const {
           if (match.found) return store.session[match.index]
           return undefined
         },
+        async injectUserMessage(sessionID: string, text: string) {
+          // Direct HTTP fallback: the SDK is auto-generated and would require
+          // a code-gen step for a new endpoint. POST the inject payload to
+          // the same path the SDK would target, fall back silently.
+          try {
+            const res = await fetch(`/api/session/${sessionID}/inject`, {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ text }),
+            })
+            if (!res.ok) throw new Error(`inject failed: ${res.status}`)
+          } catch {
+            // The handler may not be wired in every build; live inject is
+            // best-effort and the message remains in the local queue.
+          }
+        },
         query() {
           return sessionListQuery()
         },

@@ -13,7 +13,7 @@ import {
  * deterministically without a renderer or network.
  */
 
-export type SteerAction = "status" | "stop" | "change-replace" | "change-queue" | "change-dismissed" | "followup"
+export type SteerAction = "status" | "stop" | "change-replace" | "change-queue" | "change-dismissed" | "followup" | "inject"
 
 export type SteerResult = {
   action: SteerAction
@@ -24,7 +24,7 @@ export type SteerResult = {
 }
 
 export type SteerablePrompt = {
-  kind: "next" | "followup"
+  kind: "next" | "followup" | "inject"
   input: string
   parts: readonly unknown[]
 }
@@ -87,6 +87,13 @@ export async function steerActiveTask(text: string, parts: readonly unknown[], d
 
   // Acknowledge synchronously before any side effect: the user's message must
   // produce a visible local response before queue writes or awaited work.
+  if (kind === "inject") {
+    deps.ack(STEERING_ACK.inject)
+    await yieldForRender()
+    deps.enqueue({ kind: "inject", input: text, parts })
+    deps.clearInput()
+    return { action: "inject", aborted: false, queued: 1 }
+  }
   deps.ack(STEERING_ACK.followup)
   // Do not let the queue write occupy the same render turn as the local ack.
   await yieldForRender()

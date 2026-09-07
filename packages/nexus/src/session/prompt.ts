@@ -3,6 +3,7 @@ import { PermissionV1 } from "@nexus-ai/core/v1/permission"
 import path from "path"
 import { SessionV1 } from "@nexus-ai/core/v1/session"
 import os from "os"
+import { detectAmbiguity } from "./preflight"
 import { SessionID, MessageID, PartID } from "./schema"
 import { MessageV2 } from "./message-v2"
 import { SessionRevert } from "./revert"
@@ -1255,6 +1256,23 @@ const layer = Layer.effect(
         Effect.map((x) => x.flat().map(assign)),
       )
 
+      // Inject a synthetic prefix part when ambiguity preflight flagged the
+      // input. Synthetic parts are stripped from the user-facing transcript
+      // but still visible to the LLM, so the nudge never leaks to chat.
+      const finalParts = preflightHint
+        ? [
+            {
+              id: PartID.ascending(),
+              messageID: info.id,
+              sessionID: input.sessionID,
+              type: "text" as const,
+              synthetic: true,
+              text: preflightHint,
+            },
+            ...resolvedParts,
+          ]
+        : resolvedParts
+
       yield* plugin.trigger(
         "chat.message",
         {
@@ -1264,10 +1282,10 @@ const layer = Layer.effect(
           messageID: input.messageID,
           variant: input.variant,
         },
-        { message: info, parts: resolvedParts },
+        { message: info, parts: finalParts },
       )
 
-      const parts = yield* Effect.forEach(resolvedParts, (part) =>
+      const parts = yield* Effect.forEach(finalParts, (part) =>
         part.type === "file" && part.mime.startsWith("image/")
           ? image.normalize(part).pipe(
               Effect.catchIf(
@@ -1323,6 +1341,11 @@ const layer = Layer.effect(
         .join("\n")
       const taskAgent = input.agent ? yield* agents.get(input.agent) : yield* agents.defaultInfo()
       const taskSkillScope = yield* skill.prepareTask(taskText, taskAgent ?? undefined)
+
+      // Ambiguity preflight: nudge the LLM toward the question tool when the
+      // request is vague enough that guessing would waste a turn.
+      const ambiguity = detectAmbiguity(taskText)
+      const preflightHint = ambiguity.ambiguous && ambiguity.hint ? ambiguity.hint : undefined
 
       const permissions: PermissionV1.Rule[] = []
       for (const [t, enabled] of Object.entries(input.tools ?? {})) {

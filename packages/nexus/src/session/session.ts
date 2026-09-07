@@ -469,6 +469,14 @@ export interface Interface {
     sessionID: SessionID,
     predicate: (msg: SessionV1.WithParts) => boolean,
   ) => Effect.Effect<Option.Option<SessionV1.WithParts>, NotFound>
+  /**
+   * Append a user message to a running turn without interrupting it. The
+   * active SessionProcessor flushes the inject at the next tool-result
+   * boundary so the LLM sees the additional instruction on its next token.
+   * The same SessionID is reused, so live injects reconcile exactly the
+   * same way as retries.
+   */
+  readonly injectUserMessage: (input: { sessionID: SessionID; text: string }) => Effect.Effect<SessionV1.UserMessage>
 }
 
 export class Service extends Context.Service<Service, Interface>()("@nexus/Session") {}
@@ -825,6 +833,41 @@ const layer: Layer.Layer<
       return [] as Snapshot.FileDiff[]
     })
 
+    const injectUserMessage: Interface["injectUserMessage"] = Effect.fn("Session.injectUserMessage")(
+      function* (input) {
+        const current = yield* get(input.sessionID).pipe(Effect.orDie)
+        const ag = yield* agents.get(current.agent ?? "").pipe(
+          Effect.catchAll(() => agents.defaultInfo()),
+          Effect.orDie,
+        )
+        const model = current.model ?? ag.model
+        const info: SessionV1.User = {
+          id: MessageID.ascending(),
+          role: "user",
+          sessionID: input.sessionID,
+          time: { created: Date.now() },
+          agent: ag.name,
+          model: model
+            ? { providerID: model.providerID, modelID: model.modelID }
+            : undefined,
+        }
+        yield* touch(input.sessionID).pipe(Effect.orDie)
+        yield* events
+          .publish(SessionV1.Event.MessageCreated, { sessionID: input.sessionID, info })
+          .pipe(Effect.orDie)
+        yield* events
+          .publish(SessionV1.Event.MessagePartDelta, {
+            sessionID: input.sessionID,
+            messageID: info.id,
+            partID: "inject-prompt",
+            field: "text",
+            delta: input.text,
+          })
+          .pipe(Effect.orDie)
+        return info as SessionV1.UserMessage
+      },
+    )
+
     const messages: Interface["messages"] = Effect.fn("Session.messages")(function* (input) {
       if (input.limit) {
         return (yield* MessageV2.page({ sessionID: input.sessionID, limit: input.limit }).pipe(
@@ -928,6 +971,7 @@ const layer: Layer.Layer<
       removeMessage,
       removePart,
       updatePart,
+      injectUserMessage,
       getPart,
       updatePartDelta,
       findMessage,

@@ -161,7 +161,12 @@ const layer = Layer.effect(
           },
           build: {
             name: "build",
-            description: "The default agent. Executes tools based on configured permissions.",
+            description:
+              "The default agent. Executes tools based on configured permissions. " +
+              "When the user's request is ambiguous (vague pronouns like 'it/this/that', " +
+              "uncertain modal verbs like 'maybe/perhaps', or missing details), use the " +
+              "question tool to ask 1-3 specific clarifying questions BEFORE starting " +
+              "work. Do not guess when clarification is cheap.",
             options: {},
             permission: Permission.merge(
               defaults,

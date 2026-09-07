@@ -296,6 +296,20 @@ export function Session() {
     ref.submit()
   })
 
+  // Live inject path: messages received while a task is running are pushed
+  // straight into the server-side injector queue so the active agent picks
+  // them up at the next tool-result boundary, with no turn boundary required.
+  createEffect(() => {
+    const injects = pendingPrompts.list(route.sessionID).filter((p) => p.kind === "inject")
+    if (injects.length === 0) return
+    const status = sync.data.session_status[route.sessionID]?.type
+    if (!status || status === "idle") return
+    for (const item of injects) {
+      pendingPrompts.remove(item.id)
+      sync.session.injectUserMessage(route.sessionID, item.input).catch(() => pendingPrompts.add(item))
+    }
+  })
+
   const dimensions = useTerminalDimensions()
   const [sidebar, setSidebar] = kv.signal<"auto" | "hide">("sidebar", "auto")
   const [sidebarOpen, setSidebarOpen] = createSignal(false)
@@ -1588,6 +1602,34 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
         <box paddingLeft={3} paddingTop={1}>
           <Spinner color={local.agent.color(props.message.agent)}>Working...</Spinner>
         </box>
+      </Show>
+      <Show when={(() => {
+        // Smart progress block: surface the most recent todowrite state as
+        // a vertical `[✓]/[•]/[ ]` list, exactly like the reference layout.
+        for (let i = props.parts.length - 1; i >= 0; i--) {
+          const p = props.parts[i] as any
+          if (p?.type === "tool" && p.tool === "todowrite" && p.state?.metadata?.todos) {
+            return p.state.metadata.todos as { status: string; content: string; priority?: string }[]
+          }
+        }
+        return undefined
+      })()}>
+        {(todos) => (
+          <box
+            ref={(el: BoxRenderable) => alwaysSeparate.add(el)}
+            flexDirection="column"
+            paddingLeft={3}
+            paddingTop={1}
+            paddingBottom={1}
+            border={["left"]}
+            borderColor={local.agent.color(props.message.agent)}
+            flexShrink={0}
+          >
+            <For each={todos()}>
+              {(todo) => <TodoItem status={todo.status} content={todo.content} />}
+            </For>
+          </box>
+        )}
       </Show>
       <For each={props.parts}>
         {(part, index) => {

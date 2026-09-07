@@ -328,6 +328,18 @@ export const sessionHandlers = HttpApiBuilder.group(InstanceHttpApi, "session", 
       return HttpApiSchema.NoContent.make()
     })
 
+    const injectUserMessage = Effect.fn("SessionHttpApi.injectUserMessage")(function* (ctx: {
+      params: { sessionID: SessionID }
+      payload: { text: string }
+    }) {
+      yield* requireSession(ctx.params.sessionID)
+      const msg = yield* session.injectUserMessage({
+        sessionID: ctx.params.sessionID,
+        text: ctx.payload.text,
+      })
+      return msg
+    })
+
     const command = Effect.fn("SessionHttpApi.command")(function* (ctx: {
       params: { sessionID: SessionID }
       payload: typeof CommandPayload.Type

@@ -5,7 +5,7 @@
  * a daemon, or any parallel execution path. Acknowledgement strings never
  * interpolate the incoming message text.
  */
-export type SteeringKind = "status" | "stop" | "change" | "followup"
+export type SteeringKind = "status" | "stop" | "change" | "followup" | "inject"
 
 const STATUS_PHRASES = [
   "status",
@@ -98,7 +98,11 @@ export function classifySteering(text: string): SteeringKind {
   if (leadingMatch(normalized, STATUS_PHRASES)) return "status"
   if (leadingMatch(normalized, STOP_PHRASES)) return "stop"
   if (leadingMatch(normalized, CHANGE_PHRASES)) return "change"
-  return "followup"
+  // Default: live inject so the user's message reaches the running agent on the
+  // next tool-result boundary. Long messages fall back to followup to avoid
+  // flooding the current turn.
+  if (text.trim().length > 300) return "followup"
+  return "inject"
 }
 
 /**
@@ -130,6 +134,7 @@ export const STEERING_ACK = {
   stop: "Stopping current task…",
   change: "Change requested — awaiting your choice.",
   followup: "Queued until the active task finishes.",
+  inject: "Sent to the running agent.",
 } satisfies Record<Exclude<SteeringKind, "status">, string>
 
 /**

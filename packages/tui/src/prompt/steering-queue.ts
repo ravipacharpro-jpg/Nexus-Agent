@@ -14,8 +14,8 @@
 export type PendingPrompt = {
   id: string
   sessionID: string
-  /** "next" items dispatch right after an explicit cancellation; "followup" items wait for the active turn to finish. */
-  kind: "next" | "followup"
+  /** "next" items dispatch right after an explicit cancellation; "followup" items wait for the active turn to finish; "inject" items flush into the current turn without waiting. */
+  kind: "next" | "followup" | "inject"
   input: string
   parts: readonly unknown[]
 }

@@ -410,6 +410,9 @@ const layer = Layer.effect(
               attachments: attachments.length ? attachments : undefined,
             }
             yield* completeToolCall(value.id, output)
+            // Live inject: any user messages that arrived while this tool ran
+            // are already in the session. The next prompt call below picks
+            // them up automatically — no explicit drain needed.
             return
           }
 
