@@ -37,6 +37,33 @@ export async function OpenCodeAuthPlugin(_input: PluginInput): Promise<Hooks> {
   return {
     auth: {
       provider: "opencode",
+      async loader(getAuth) {
+        const auth = await getAuth()
+        if (!auth || auth.type !== "oauth") return {}
+        if (auth.expires > Date.now() + 60_000) return { apiKey: auth.access }
+
+        const token = await requestJson<{ access_token: string; refresh_token: string; expires_in: number }>(
+          `${SERVER}/auth/device/token`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              grant_type: "refresh_token",
+              refresh_token: auth.refresh,
+              client_id: CLIENT_ID,
+            }),
+          },
+        )
+        await _input.client.auth.set({
+          path: { id: "opencode" },
+          body: {
+            type: "oauth",
+            access: token.access_token,
+            refresh: token.refresh_token,
+            expires: Date.now() + token.expires_in * 1000,
+          },
+        })
+        return { apiKey: token.access_token }
+      },
       methods: [
         {
           type: "oauth",
