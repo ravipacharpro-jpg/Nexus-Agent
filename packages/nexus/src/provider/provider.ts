@@ -54,9 +54,10 @@ function hasUsableProviderCredential(
   provider: Pick<Info, "id" | "key" | "source">,
   apiKeys: Record<string, string[]>,
 ): boolean {
-  if (provider.id === "ollama" || provider.id === "opencode" || provider.id === "omniroute") return true
+  // OpenCode is hosted; OmniRoute is a user's optional local gateway.
+  if (provider.id === "ollama" || provider.id === "opencode") return true
   if (provider.source === "env" || provider.source === "api") return true
-  const keys = [...(provider.key ? [provider.key] : []), ...configuredProviderKeys(apiKeys, provider.id)]
+  const keys = [...new Set([...(provider.key ? [provider.key.trim()] : []), ...configuredProviderKeys(apiKeys, provider.id)])]
   if (keys.length === 0) return false
   const now = Date.now()
   return keys.some((key) => {
@@ -74,15 +75,16 @@ function mergeApiVaultKeys(configured: unknown): Record<string, string[]> {
   if (configured && typeof configured === "object" && !Array.isArray(configured)) {
     for (const [provider, values] of Object.entries(configured as Record<string, unknown>)) {
       if (Array.isArray(values)) {
-        result[provider] = values.filter((value): value is string => {
+        const usable = values.filter((value): value is string => {
           if (typeof value !== "string" || value.trim().length === 0) return false
-          const status = getCachedKeyStatus(value)
+          const status = getCachedKeyStatus(value.trim())
           if (!status) return true
           if (status.status === "invalid") return false
           if (status.status === "suspended" && status.suspendedUntil && Date.parse(status.suspendedUntil) > Date.now())
             return false
           return true
         })
+        result[provider] = [...new Set(usable.map((value) => value.trim()))]
       }
     }
   }
@@ -2315,8 +2317,7 @@ const layer = Layer.effect(
           (p) =>
             configured.length === 0 ||
             configured.includes(p.id) ||
-            p.id === "opencode" ||
-            p.id === "omniroute",
+            p.id === "opencode",
         )
         .filter((p) => !isDeprecatedFreeProvider(p.id))
         .filter((p) => hasUsableProviderCredential(p, effectiveApiKeys))
@@ -2365,8 +2366,7 @@ const layer = Layer.effect(
           (p) =>
             configured.length === 0 ||
             configured.includes(p.id) ||
-            p.id === "opencode" ||
-            p.id === "omniroute",
+            p.id === "opencode",
         )
         .filter((p) => hasUsableProviderCredential(p, effectiveApiKeys))
         .sort((a, b) => providerPriority(a.id) - providerPriority(b.id) || a.id.localeCompare(b.id))
