@@ -71,6 +71,7 @@ export const PromptPayload = Schema.Struct(Struct.omit(SessionPrompt.PromptInput
 export const CommandPayload = Schema.Struct(Struct.omit(SessionPrompt.CommandInput.fields, ["sessionID"]))
 export const ShellPayload = Schema.Struct(Struct.omit(SessionPrompt.ShellInput.fields, ["sessionID"]))
 export const RevertPayload = Schema.Struct(Struct.omit(SessionRevert.RevertInput.fields, ["sessionID"]))
+export const InjectPayload = Schema.Struct({ text: Schema.String })
 export const PermissionResponsePayload = Schema.Struct({
   response: PermissionV1.Reply,
 })
@@ -102,6 +103,7 @@ export const SessionPaths = {
   deleteMessage: `${root}/:sessionID/message/:messageID`,
   deletePart: `${root}/:sessionID/message/:messageID/part/:partID`,
   updatePart: `${root}/:sessionID/message/:messageID/part/:partID`,
+  inject: `${root}/:sessionID/inject`,
 } as const
 
 export const SessionApi = HttpApi.make("session")
@@ -440,6 +442,21 @@ export const SessionApi = HttpApi.make("session")
           OpenApi.annotations({
             identifier: "part.update",
             description: "Update a part in a message.",
+          }),
+        ),
+        HttpApiEndpoint.post("injectUserMessage", SessionPaths.inject, {
+          params: { sessionID: SessionID },
+          query: WorkspaceRoutingQuery,
+          payload: InjectPayload,
+          success: described(SessionV1.User, "Injected user message"),
+          error: [HttpApiError.BadRequest, ApiNotFoundError, SessionBusyError],
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "session.inject",
+            summary: "Inject user message into running turn",
+            description:
+              "Append a user message to a session without interrupting the active turn. " +
+              "The running agent picks it up at the next tool-result boundary.",
           }),
         ),
       )

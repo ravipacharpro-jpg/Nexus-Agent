@@ -588,9 +588,9 @@ export const {
         async injectUserMessage(sessionID: string, text: string) {
           // Direct HTTP fallback: the SDK is auto-generated and would require
           // a code-gen step for a new endpoint. POST the inject payload to
-          // the same path the SDK would target, fall back silently.
+          // the live HttpApi route, fall back silently.
           try {
-            const res = await fetch(`/api/session/${sessionID}/inject`, {
+            const res = await fetch(`/session/${sessionID}/inject`, {
               method: "POST",
               headers: { "content-type": "application/json" },
               body: JSON.stringify({ text }),
