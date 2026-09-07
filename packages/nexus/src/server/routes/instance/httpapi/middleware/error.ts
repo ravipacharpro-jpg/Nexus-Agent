@@ -11,6 +11,9 @@ function safeServerMessage(cause: Cause.Cause<unknown>): string {
   if (/invalid.*api key|api key.*(?:invalid|not valid)|unauthorized|forbidden|\b(?:401|403)\b/i.test(text)) {
     return "Provider authentication failed. Check the selected provider key and retry."
   }
+  if (/free tier can only be used in opencode|only be used in opencode/i.test(text)) {
+    return "This OpenCode free model only works inside OpenCode. Select another provider/model or configure an OpenCode session."
+  }
   if (/model.*(?:not found|does not exist|unsupported)|unsupported.*model|\b404\b/i.test(text)) {
     return "The selected model is unavailable for this provider. Run `nexus models` and choose a supported text model."
   }

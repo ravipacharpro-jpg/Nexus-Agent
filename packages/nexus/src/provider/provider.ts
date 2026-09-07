@@ -362,7 +362,10 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
 
     if (!ok) {
       for (const [key, value] of Object.entries(input.models)) {
-        if (value.cost.input === 0) continue
+        // OpenCode's free tier is only available inside OpenCode itself;
+        // external clients cannot use those models without an authenticated
+        // OpenCode session. Local OmniRoute free models remain available.
+        if (input.id !== "opencode" && value.cost.input === 0) continue
         delete input.models[key]
       }
     }
