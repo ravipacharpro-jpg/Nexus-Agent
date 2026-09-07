@@ -1331,21 +1331,20 @@ const layer = Layer.effect(
     )(function* (input: PromptInput) {
       const session = yield* sessions.get(input.sessionID).pipe(Effect.orDie)
       yield* revert.cleanup(session)
-      const message = yield* createUserMessage(input)
-      yield* sessions.touch(input.sessionID)
 
       const taskText = input.parts
         .map((part) => (part.type === "text" ? part.text : ""))
         .filter((text) => text.length > 0)
         .concat(input.arguments)
         .join("\n")
-      const taskAgent = input.agent ? yield* agents.get(input.agent) : yield* agents.defaultInfo()
-      const taskSkillScope = yield* skill.prepareTask(taskText, taskAgent ?? undefined)
-
-      // Ambiguity preflight: nudge the LLM toward the question tool when the
-      // request is vague enough that guessing would waste a turn.
       const ambiguity = detectAmbiguity(taskText)
       const preflightHint = ambiguity.ambiguous && ambiguity.hint ? ambiguity.hint : undefined
+
+      const message = yield* createUserMessage(input)
+      yield* sessions.touch(input.sessionID)
+
+      const taskAgent = input.agent ? yield* agents.get(input.agent) : yield* agents.defaultInfo()
+      const taskSkillScope = yield* skill.prepareTask(taskText, taskAgent ?? undefined)
 
       const permissions: PermissionV1.Rule[] = []
       for (const [t, enabled] of Object.entries(input.tools ?? {})) {
