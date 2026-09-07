@@ -892,7 +892,10 @@ const layer = Layer.effect(
       return yield* provider.defaultModel().pipe(Effect.orDie)
     })
 
-    const createUserMessage = Effect.fn("SessionPrompt.createUserMessage")(function* (input: PromptInput) {
+    const createUserMessage = Effect.fn("SessionPrompt.createUserMessage")(function* (
+      input: PromptInput,
+      preflightHint?: string,
+    ) {
       const agentName = input.agent
       const ag = agentName ? yield* agents.get(agentName) : yield* agents.defaultInfo()
       if (!ag) {
@@ -1340,7 +1343,7 @@ const layer = Layer.effect(
       const ambiguity = detectAmbiguity(taskText)
       const preflightHint = ambiguity.ambiguous && ambiguity.hint ? ambiguity.hint : undefined
 
-      const message = yield* createUserMessage(input)
+      const message = yield* createUserMessage(input, preflightHint)
       yield* sessions.touch(input.sessionID)
 
       const taskAgent = input.agent ? yield* agents.get(input.agent) : yield* agents.defaultInfo()
