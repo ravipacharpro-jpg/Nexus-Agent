@@ -1673,6 +1673,28 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
           </text>
         </box>
       </Show>
+      {(() => {
+        // Summary footer
+        const tools = props.parts.filter(p => p.type === "tool")
+        const completed = tools.filter(t => t.state?.status === "completed").length
+        const running = tools.filter(t => t.state?.status === "running").length
+        const failed = tools.filter(t => t.state?.status === "error").length
+        const readOps = tools.filter(t => t.tool === "read" && t.state?.status === "completed").length
+        const writeOps = tools.filter(t => t.tool === "write" && t.state?.status === "completed").length
+        const editOps = tools.filter(t => t.tool === "edit" && t.state?.status === "completed").length
+        
+        if (completed === 0 && running === 0 && failed === 0) return null
+        
+        return (
+          <box marginTop={1} paddingLeft={3} paddingTop={1} border={["left"]} borderColor={theme.borderActive}>
+            <text fg={theme.textMuted}>--- Summary ---</text>
+            <text fg={theme.success}>Tasks done: {completed}</text>
+            {running > 0 && <text fg={theme.warning}>  |  Running: {running}</text>}
+            {failed > 0 && <text fg={theme.error}>  |  Failed: {failed}</text>}
+            <text fg={theme.textMuted}>  |  Files read: {readOps}  |  Written: {writeOps}  |  Edited: {editOps}</text>
+          </box>
+        )
+      })()}
       <Show when={props.message.error && props.message.error.name !== "MessageAbortedError"}>
         <box
           ref={(el: BoxRenderable) => alwaysSeparate.add(el)}
@@ -1830,20 +1852,21 @@ function ReasoningHeader(props: {
 
 function TextPart(props: { last: boolean; part: TextPart; message: AssistantMessage }) {
   const ctx = use()
-  const { theme, syntax } = useTheme()
+  const { theme } = useTheme()
+  const cleanText = createMemo(() => {
+    const text = props.part.text.trim()
+    // Strip code blocks (, , etc.)
+    const stripped = text.replace(/\`\`\`[\s\S]*?\`\`\`/g, '').trim()
+    // Strip inline code
+    const clean = stripped.replace(/\`[^\`]+\`/g, '').trim()
+    return clean || undefined
+  })
   return (
-    <Show when={props.part.text.trim()}>
+    <Show when={cleanText()}>
       <box ref={(el: BoxRenderable) => alwaysSeparate.add(el)} paddingLeft={3} marginTop={1} flexShrink={0}>
-        <markdown
-          syntaxStyle={syntax()}
-          streaming={true}
-          internalBlockMode="top-level"
-          content={props.part.text.trim()}
-          tableOptions={{ style: "grid" }}
-          conceal={ctx.conceal()}
-          fg={theme.markdownText}
-          bg={theme.background}
-        />
+        <text fg={theme.text}>
+          {cleanText()}
+        </text>
       </box>
     </Show>
   )
@@ -1880,55 +1903,76 @@ function ToolPart(props: { last: boolean; part: ToolPart; message: AssistantMess
     },
   }
 
+  // Compact file operation display
+  const compactDisplay = createMemo(() => {
+    const tool = props.part.tool
+    const input = props.part.state.input ?? {}
+    const status = props.part.state.status
+    const icon = status === "completed" ? "✓" : status === "running" ? "•" : "✗"
+    const filePath = input.filePath ?? input.path ?? ""
+    if (tool === "read") return { icon, label: `File: ${filePath}`, fg: theme.textMuted }
+    if (tool === "write") return { icon, label: `Write: ${filePath}`, fg: theme.textMuted }
+    if (tool === "edit") return { icon, label: `Edit: ${filePath}`, fg: theme.textMuted }
+    if (tool === "bash") return { icon, label: "Run: Executed command", fg: theme.textMuted }
+    if (tool === "glob") return { icon, label: "Search: Searched files", fg: theme.textMuted }
+    if (tool === "grep") return { icon, label: "Search: Pattern match", fg: theme.textMuted }
+    return null
+  })
+
   return (
     <Show when={!shouldHide()}>
-      <Switch>
-        <Match when={display() === "bash"}>
-          <Shell {...toolprops} />
-        </Match>
-        <Match when={display() === "glob"}>
-          <Glob {...toolprops} />
-        </Match>
-        <Match when={display() === "read"}>
-          <Read {...toolprops} />
-        </Match>
-        <Match when={display() === "grep"}>
-          <Grep {...toolprops} />
-        </Match>
-        <Match when={display() === "webfetch"}>
-          <WebFetch {...toolprops} />
-        </Match>
-        <Match when={display() === "websearch"}>
-          <WebSearch {...toolprops} />
-        </Match>
-        <Match when={display() === "write"}>
-          <Write {...toolprops} />
-        </Match>
-        <Match when={display() === "edit"}>
-          <Edit {...toolprops} />
-        </Match>
-        <Match when={display() === "task"}>
-          <Task {...toolprops} />
-        </Match>
-        <Match when={display() === "execute"}>
-          <Execute {...toolprops} />
-        </Match>
-        <Match when={display() === "apply_patch"}>
-          <ApplyPatch {...toolprops} />
-        </Match>
-        <Match when={display() === "todowrite"}>
-          <TodoWrite {...toolprops} />
-        </Match>
-        <Match when={display() === "question"}>
-          <Question {...toolprops} />
-        </Match>
-        <Match when={display() === "skill"}>
-          <Skill {...toolprops} />
-        </Match>
-        <Match when={true}>
-          <GenericTool {...toolprops} />
-        </Match>
-      </Switch>
+      <Show when={compactDisplay()}>
+        <text fg={compactDisplay()!.fg}>{compactDisplay()!.icon} {compactDisplay()!.label}</text>
+      </Show>
+      <Show when={!compactDisplay()}>
+        <Switch>
+          <Match when={display() === "bash"}>
+            <Shell {...toolprops} />
+          </Match>
+          <Match when={display() === "glob"}>
+            <Glob {...toolprops} />
+          </Match>
+          <Match when={display() === "read"}>
+            <Read {...toolprops} />
+          </Match>
+          <Match when={display() === "grep"}>
+            <Grep {...toolprops} />
+          </Match>
+          <Match when={display() === "webfetch"}>
+            <WebFetch {...toolprops} />
+          </Match>
+          <Match when={display() === "websearch"}>
+            <WebSearch {...toolprops} />
+          </Match>
+          <Match when={display() === "write"}>
+            <Write {...toolprops} />
+          </Match>
+          <Match when={display() === "edit"}>
+            <Edit {...toolprops} />
+          </Match>
+          <Match when={display() === "task"}>
+            <Task {...toolprops} />
+          </Match>
+          <Match when={display() === "execute"}>
+            <Execute {...toolprops} />
+          </Match>
+          <Match when={display() === "apply_patch"}>
+            <ApplyPatch {...toolprops} />
+          </Match>
+          <Match when={display() === "todowrite"}>
+            <TodoWrite {...toolprops} />
+          </Match>
+          <Match when={display() === "question">
+            <Question {...toolprops} />
+          </Match>
+          <Match when={display() === "skill">
+            <Skill {...toolprops} />
+          </Match>
+          <Match when={true}>
+            <GenericTool {...toolprops} />
+          </Match>
+        </Switch>
+      </Show>
     </Show>
   )
 }
