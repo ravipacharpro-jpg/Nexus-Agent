@@ -1625,6 +1625,9 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
             borderColor={local.agent.color(props.message.agent)}
             flexShrink={0}
           >
+            <text fg={local.agent.color(props.message.agent)}>
+              <b>{todos().filter((t: any) => t.status === "completed").length}/{todos().length} steps completed</b>
+            </text>
             <For each={todos()}>
               {(todo) => <TodoItem status={todo.status} content={todo.content} />}
             </For>
@@ -2665,14 +2668,20 @@ function ApplyPatch(props: ToolProps) {
 
 function TodoWrite(props: ToolProps) {
   const todos = createMemo(() => parseTodos(props.input.todos))
+  const completed = createMemo(() => todos().filter((t: any) => t.status === "completed").length)
+  const total = createMemo(() => todos().length)
   return (
     <Switch>
       <Match when={parseTodos(props.metadata.todos).length}>
-        <BlockTool title="# Todos" part={props.part}>
-          <box>
-            <For each={todos()}>{(todo) => <TodoItem status={todo.status} content={todo.content} />}</For>
-          </box>
-        </BlockTool>
+        <InlineTool
+          icon="✓"
+          pending="Updating todos..."
+          failure="Todo update failed"
+          complete={false}
+          part={props.part}
+        >
+          {completed()}/{total()} todos done
+        </InlineTool>
       </Match>
       <Match when={true}>
         <InlineTool
