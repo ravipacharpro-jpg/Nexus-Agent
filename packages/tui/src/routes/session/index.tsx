@@ -296,20 +296,6 @@ export function Session() {
     ref.submit()
   })
 
-  // Live inject path: messages received while a task is running are pushed
-  // straight into the server-side injector queue so the active agent picks
-  // them up at the next tool-result boundary, with no turn boundary required.
-  createEffect(() => {
-    const injects = pendingPrompts.list(route.sessionID).filter((p) => p.kind === "inject")
-    if (injects.length === 0) return
-    const status = sync.data.session_status[route.sessionID]?.type
-    if (!status || status === "idle") return
-    for (const item of injects) {
-      pendingPrompts.remove(item.id)
-      sync.session.injectUserMessage(route.sessionID, item.input).catch(() => pendingPrompts.add(item))
-    }
-  })
-
   const dimensions = useTerminalDimensions()
   const [sidebar, setSidebar] = kv.signal<"auto" | "hide">("sidebar", "auto")
   const [sidebarOpen, setSidebarOpen] = createSignal(false)
@@ -1522,7 +1508,6 @@ function UserMessage(props: {
             backgroundColor={hover() ? theme.backgroundElement : theme.backgroundPanel}
             flexShrink={0}
           >
-            <text fg={theme.textMuted}>you</text>
             <text fg={theme.text}>{text()}</text>
             <Show when={files().length}>
               <box flexDirection="row" paddingBottom={metadataVisible() ? 1 : 0} paddingTop={1} gap={1} flexWrap="wrap">
@@ -1603,37 +1588,6 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
           <Spinner color={local.agent.color(props.message.agent)}>Working...</Spinner>
         </box>
       </Show>
-      <Show when={(() => {
-        // Smart progress block: surface the most recent todowrite state as
-        // a vertical `[✓]/[•]/[ ]` list, exactly like the reference layout.
-        for (let i = props.parts.length - 1; i >= 0; i--) {
-          const p = props.parts[i] as any
-          if (p?.type === "tool" && p.tool === "todowrite" && p.state?.metadata?.todos) {
-            return p.state.metadata.todos as { status: string; content: string; priority?: string }[]
-          }
-        }
-        return undefined
-      })()}>
-        {(todos) => (
-          <box
-            ref={(el: BoxRenderable) => alwaysSeparate.add(el)}
-            flexDirection="column"
-            paddingLeft={3}
-            paddingTop={1}
-            paddingBottom={1}
-            border={["left"]}
-            borderColor={local.agent.color(props.message.agent)}
-            flexShrink={0}
-          >
-            <text fg={local.agent.color(props.message.agent)}>
-              <b>{todos().filter((t: any) => t.status === "completed").length}/{todos().length} steps completed</b>
-            </text>
-            <For each={todos()}>
-              {(todo) => <TodoItem status={todo.status} content={todo.content} />}
-            </For>
-          </box>
-        )}
-      </Show>
       <For each={props.parts}>
         {(part, index) => {
           const component = createMemo(() => PART_MAPPING[part.type as keyof typeof PART_MAPPING])
@@ -1673,28 +1627,6 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
           </text>
         </box>
       </Show>
-      {(() => {
-        // Summary footer
-        const tools = props.parts.filter(p => p.type === "tool")
-        const completed = tools.filter(t => t.state?.status === "completed").length
-        const running = tools.filter(t => t.state?.status === "running").length
-        const failed = tools.filter(t => t.state?.status === "error").length
-        const readOps = tools.filter(t => t.tool === "read" && t.state?.status === "completed").length
-        const writeOps = tools.filter(t => t.tool === "write" && t.state?.status === "completed").length
-        const editOps = tools.filter(t => t.tool === "edit" && t.state?.status === "completed").length
-        
-        if (completed === 0 && running === 0 && failed === 0) return null
-        
-        return (
-          <box marginTop={1} paddingLeft={3} paddingTop={1} border={["left"]} borderColor={theme.borderActive}>
-            <text fg={theme.textMuted}>--- Summary ---</text>
-            <text fg={theme.success}>Tasks done: {completed}</text>
-            {running > 0 && <text fg={theme.warning}>  |  Running: {running}</text>}
-            {failed > 0 && <text fg={theme.error}>  |  Failed: {failed}</text>}
-            <text fg={theme.textMuted}>  |  Files read: {readOps}  |  Written: {writeOps}  |  Edited: {editOps}</text>
-          </box>
-        )
-      })()}
       <Show when={props.message.error && props.message.error.name !== "MessageAbortedError"}>
         <box
           ref={(el: BoxRenderable) => alwaysSeparate.add(el)}
@@ -1724,8 +1656,6 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
               >
                 ▣{" "}
               </span>{" "}
-              <span style={{ fg: theme.text }}>Agent</span>
-              <span style={{ fg: theme.textMuted }}> · </span>
               <span style={{ fg: theme.text }}>{Locale.titlecase(props.message.mode)}</span>
               <span style={{ fg: theme.textMuted }}> · {model()}</span>
               <Show when={duration()}>
@@ -1852,21 +1782,20 @@ function ReasoningHeader(props: {
 
 function TextPart(props: { last: boolean; part: TextPart; message: AssistantMessage }) {
   const ctx = use()
-  const { theme } = useTheme()
-  const cleanText = createMemo(() => {
-    const text = props.part.text.trim()
-    // Strip code blocks (, , etc.)
-    const stripped = text.replace(/\`\`\`[\s\S]*?\`\`\`/g, '').trim()
-    // Strip inline code
-    const clean = stripped.replace(/\`[^\`]+\`/g, '').trim()
-    return clean || undefined
-  })
+  const { theme, syntax } = useTheme()
   return (
-    <Show when={cleanText()}>
+    <Show when={props.part.text.trim()}>
       <box ref={(el: BoxRenderable) => alwaysSeparate.add(el)} paddingLeft={3} marginTop={1} flexShrink={0}>
-        <text fg={theme.text}>
-          {cleanText()}
-        </text>
+        <markdown
+          syntaxStyle={syntax()}
+          streaming={true}
+          internalBlockMode="top-level"
+          content={props.part.text.trim()}
+          tableOptions={{ style: "grid" }}
+          conceal={ctx.conceal()}
+          fg={theme.markdownText}
+          bg={theme.background}
+        />
       </box>
     </Show>
   )
@@ -1903,76 +1832,67 @@ function ToolPart(props: { last: boolean; part: ToolPart; message: AssistantMess
     },
   }
 
-  // Compact file operation display
-  const compactDisplay = createMemo(() => {
-    const tool = props.part.tool
-    const input = props.part.state.input ?? {}
-    const status = props.part.state.status
-    const icon = status === "completed" ? "✓" : status === "running" ? "•" : "✗"
-    const filePath = input.filePath ?? input.path ?? ""
-    if (tool === "read") return { icon, label: `File: ${filePath}`, fg: theme.textMuted }
-    if (tool === "write") return { icon, label: `Write: ${filePath}`, fg: theme.textMuted }
-    if (tool === "edit") return { icon, label: `Edit: ${filePath}`, fg: theme.textMuted }
-    if (tool === "bash") return { icon, label: "Run: Executed command", fg: theme.textMuted }
-    if (tool === "glob") return { icon, label: "Search: Searched files", fg: theme.textMuted }
-    if (tool === "grep") return { icon, label: "Search: Pattern match", fg: theme.textMuted }
-    return null
-  })
-
   return (
     <Show when={!shouldHide()}>
-      <Show when={compactDisplay()}>
-        <text fg={compactDisplay()!.fg}>{compactDisplay()!.icon} {compactDisplay()!.label}</text>
-      </Show>
-      <Show when={!compactDisplay()}>
-        <Switch>
-          <Match when={display() === "bash"}>
-            <Shell {...toolprops} />
-          </Match>
-          <Match when={display() === "glob"}>
-            <Glob {...toolprops} />
-          </Match>
-          <Match when={display() === "read"}>
-            <Read {...toolprops} />
-          </Match>
-          <Match when={display() === "grep"}>
-            <Grep {...toolprops} />
-          </Match>
-          <Match when={display() === "webfetch"}>
-            <WebFetch {...toolprops} />
-          </Match>
-          <Match when={display() === "websearch"}>
-            <WebSearch {...toolprops} />
-          </Match>
-          <Match when={display() === "write"}>
-            <Write {...toolprops} />
-          </Match>
-          <Match when={display() === "edit"}>
-            <Edit {...toolprops} />
-          </Match>
-          <Match when={display() === "task"}>
-            <Task {...toolprops} />
-          </Match>
-          <Match when={display() === "execute"}>
-            <Execute {...toolprops} />
-          </Match>
-          <Match when={display() === "apply_patch"}>
-            <ApplyPatch {...toolprops} />
-          </Match>
-          <Match when={display() === "todowrite"}>
-            <TodoWrite {...toolprops} />
-          </Match>
-          <Match when={display() === "question">
-            <Question {...toolprops} />
-          </Match>
-          <Match when={display() === "skill">
-            <Skill {...toolprops} />
-          </Match>
-          <Match when={true}>
-            <GenericTool {...toolprops} />
-          </Match>
-        </Switch>
-      </Show>
+      <Switch>
+        <Match when={display() === "bash"}>
+          <Shell {...toolprops} />
+        </Match>
+        <Match when={display() === "glob"}>
+          <Glob {...toolprops} />
+        </Match>
+        <Match when={display() === "read"}>
+          <Read {...toolprops} />
+        </Match>
+        <Match when={display() === "grep"}>
+          <Grep {...toolprops} />
+        </Match>
+        <Match when={display() === "webfetch"}>
+          <WebFetch {...toolprops} />
+        </Match>
+        <Match when={display() === "websearch"}>
+          <WebSearch {...toolprops} />
+        </Match>
+        <Match when={display() === "write"}>
+          <Write {...toolprops} />
+        </Match>
+        <Match when={display() === "edit"}>
+          <Edit {...toolprops} />
+        </Match>
+        <Match when={display() === "task"}>
+          <Task {...toolprops} />
+        </Match>
+        <Match when={display() === "execute"}>
+          <Execute {...toolprops} />
+        </Match>
+        <Match when={display() === "apply_patch"}>
+          <ApplyPatch {...toolprops} />
+        </Match>
+        <Match when={display() === "todowrite"}>
+          {(() => {
+            const todos = parseTodos(toolprops.input.todos)
+            const completed = todos.filter((t: any) => t.status === "completed").length
+            const total = todos.length
+            return total > 0 ? (
+              <box paddingLeft={3} paddingTop={1} paddingBottom={1} flexDirection="column" flexShrink={0}>
+                <text fg={theme.text}>
+                  <b>{completed}/{total} steps completed</b>
+                </text>
+                <For each={todos}>{(todo) => <TodoItem status={todo.status} content={todo.content} />}</For>
+              </box>
+            ) : <TodoWrite {...toolprops} />
+          })()}
+        </Match>
+        <Match when={display() === "question"}>
+          <Question {...toolprops} />
+        </Match>
+        <Match when={display() === "skill"}>
+          <Skill {...toolprops} />
+        </Match>
+        <Match when={true}>
+          <GenericTool {...toolprops} />
+        </Match>
+      </Switch>
     </Show>
   )
 }
