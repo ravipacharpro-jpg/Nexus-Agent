@@ -1,6 +1,6 @@
 import { createScrollbackWriter } from "@opentui/solid"
 import { TextRenderable, type ColorInput, type ScrollbackRenderContext, type ScrollbackWriter } from "@opentui/core"
-import { Match, Switch, createMemo } from "solid-js"
+import { Match, Show, Switch, createMemo } from "solid-js"
 import { entryBody, entryFlags } from "./entry.body"
 import { entryColor, entryLook, entrySyntax } from "./scrollback.shared"
 import { toolFiletype, toolStructuredFinal } from "./tool"
@@ -85,6 +85,10 @@ export function separatorRows(
 ): number {
   if (!prev || sameEntryGroup(prev, next)) {
     return 0
+  }
+
+  if (prev.kind === "tool" && next.kind === "assistant") {
+    return 1
   }
 
   if (entryLayout(prev) === "inline" && entryLayout(next, body) === "inline") {
@@ -286,14 +290,26 @@ export function RunEntryContent(props: {
         </box>
       </Match>
       <Match when={markdown()}>
-        <markdown
-          width="100%"
-          syntaxStyle={syntax()}
-          streaming={streaming()}
-          content={markdown()!.content}
-          fg={color()}
-          tableOptions={{ widthMode: "content" }}
-        />
+        <box width="100%" flexDirection="column" gap={1}>
+          <markdown
+            width="100%"
+            syntaxStyle={syntax()}
+            streaming={streaming()}
+            content={markdown()!.content}
+            fg={color()}
+            tableOptions={{ widthMode: "content" }}
+          />
+          <Show when={markdown()!.content.includes("```") || markdown()!.content.includes("curl -fsSL")}>
+            <box width="100%" flexDirection="column" gap={0} paddingLeft={1}>
+              <text width="100%" wrapMode="word" fg={theme().block.muted} attributes={1}>
+                Raw:
+              </text>
+              <text width="100%" wrapMode="word" fg={theme().block.text}>
+                {markdown()!.content.replace(/```[a-z]*\n?/g, "").replace(/```/g, "").trim()}
+              </text>
+            </box>
+          </Show>
+        </box>
       </Match>
     </Switch>
   )

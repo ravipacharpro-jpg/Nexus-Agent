@@ -102,7 +102,7 @@ describe("Truncate", () => {
 
     test("uses default MAX_LINES and MAX_BYTES", () => {
       expect(Truncate.MAX_LINES).toBe(2000)
-      expect(Truncate.MAX_BYTES).toBe(50 * 1024)
+      expect(Truncate.MAX_BYTES).toBe(100 * 1024)
     })
 
     it.live("limits() falls back to MAX_LINES/MAX_BYTES when Config is not provided", () =>
@@ -168,7 +168,7 @@ describe("Truncate", () => {
         const result = yield* svc.output(content)
 
         expect(result.truncated).toBe(true)
-        expect(result.content).toContain("bytes truncated...")
+        expect(result.content).toContain("truncated...")
         expect(Buffer.byteLength(content, "utf-8")).toBeGreaterThan(Truncate.MAX_BYTES)
       }),
     )

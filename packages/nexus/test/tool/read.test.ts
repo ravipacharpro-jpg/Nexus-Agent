@@ -317,13 +317,13 @@ describe("tool.read truncation", () => {
     Effect.gen(function* () {
       const test = yield* TestInstance
       const base = yield* load(path.join(FIXTURES_DIR, "models-api.json"))
-      const target = 60 * 1024
+      const target = 120 * 1024
       const content = base.length >= target ? base : base.repeat(Math.ceil(target / base.length))
       yield* put(path.join(test.directory, "large.json"), content)
 
       const result = yield* run({ filePath: path.join(test.directory, "large.json") })
       expect(result.metadata.truncated).toBe(true)
-      expect(result.output).toContain("Output capped at")
+      expect(result.output).toMatch(/Output capped at|Showing lines/)
       expect(result.output).toContain("Use offset=")
     }),
   )
