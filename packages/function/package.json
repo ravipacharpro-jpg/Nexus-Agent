@@ -1,6 +1,6 @@
 {
   "name": "@nexus-ai/function",
-  "version": "0.1.59",
+  "version": "0.1.65",
   "$schema": "https://json.schemastore.org/package.json",
   "private": true,
   "type": "module",

@@ -1133,8 +1133,8 @@ const TOOL_RULES = {
   },
   read: {
     view: {
-      output: false,
-      final: false,
+      output: true,
+      final: true,
     },
     run: runRead,
     scroll: {
@@ -1144,8 +1144,8 @@ const TOOL_RULES = {
   },
   glob: {
     view: {
-      output: false,
-      final: false,
+      output: true,
+      final: true,
     },
     run: runGlob,
     scroll: {
@@ -1156,8 +1156,8 @@ const TOOL_RULES = {
   },
   grep: {
     view: {
-      output: false,
-      final: false,
+      output: true,
+      final: true,
     },
     run: runGrep,
     scroll: {
@@ -1167,8 +1167,8 @@ const TOOL_RULES = {
   },
   list: {
     view: {
-      output: false,
-      final: false,
+      output: true,
+      final: true,
     },
     run: runList,
     scroll: {
@@ -1178,8 +1178,8 @@ const TOOL_RULES = {
   },
   lsp: {
     view: {
-      output: false,
-      final: false,
+      output: true,
+      final: true,
     },
     run: runLsp,
     scroll: {
@@ -1189,8 +1189,8 @@ const TOOL_RULES = {
   },
   webfetch: {
     view: {
-      output: false,
-      final: false,
+      output: true,
+      final: true,
     },
     run: runWebfetch,
     scroll: {
@@ -1200,8 +1200,8 @@ const TOOL_RULES = {
   },
   websearch: {
     view: {
-      output: false,
-      final: false,
+      output: true,
+      final: true,
     },
     run: runWebSearch,
     scroll: {
@@ -1211,8 +1211,8 @@ const TOOL_RULES = {
   },
   skill: {
     view: {
-      output: false,
-      final: false,
+      output: true,
+      final: true,
     },
     run: runSkill,
     scroll: {

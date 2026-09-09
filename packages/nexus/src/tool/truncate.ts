@@ -12,7 +12,7 @@ import { TRUNCATION_DIR } from "./truncation-dir"
 const RETENTION = Duration.days(7)
 
 export const MAX_LINES = 2000
-export const MAX_BYTES = 50 * 1024
+export const MAX_BYTES = 100 * 1024
 export const DIR = TRUNCATION_DIR
 export const GLOB = path.join(TRUNCATION_DIR, "*")
 
@@ -87,6 +87,7 @@ const layer = Layer.effect(
       const maxLines = options.maxLines ?? resolved.maxLines
       const maxBytes = options.maxBytes ?? resolved.maxBytes
       const direction = options.direction ?? "head"
+
       const lines = text.split("\n")
       const totalBytes = Buffer.byteLength(text, "utf-8")
 
