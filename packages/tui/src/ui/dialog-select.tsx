@@ -610,7 +610,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
           <scrollbox
             paddingLeft={1}
             paddingRight={1}
-            scrollbarOptions={{ visible: false }}
+            scrollbarOptions={{ visible: true }}
             scrollAcceleration={scrollAcceleration()}
             ref={(r: ScrollBoxRenderable) => (scroll = r)}
             maxHeight={height()}

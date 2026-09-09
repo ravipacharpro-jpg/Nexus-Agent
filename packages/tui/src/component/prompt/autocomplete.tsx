@@ -734,7 +734,7 @@ export function Autocomplete(props: {
         ref={(r: ScrollBoxRenderable) => (scroll = r)}
         backgroundColor={theme.backgroundMenu}
         height={height()}
-        scrollbarOptions={{ visible: false }}
+        scrollbarOptions={{ visible: true }}
         scrollAcceleration={scrollAcceleration()}
       >
         <Index

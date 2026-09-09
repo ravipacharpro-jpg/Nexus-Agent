@@ -299,23 +299,23 @@ export function Session() {
   const dimensions = useTerminalDimensions()
   const [sidebar, setSidebar] = kv.signal<"auto" | "hide">("sidebar", "auto")
   const [sidebarOpen, setSidebarOpen] = createSignal(false)
-  const [conceal, setConceal] = createSignal(true)
+  const [conceal, setConceal] = createSignal(false)
   const thinking = useThinkingMode()
   const thinkingMode = thinking.mode
   const showThinking = createMemo(() => true)
-  const [timestamps, setTimestamps] = kv.signal<"hide" | "show">("timestamps", "hide")
+  const [timestamps, setTimestamps] = kv.signal<"hide" | "show">("timestamps", "show")
   const [showDetails, setShowDetails] = kv.signal("tool_details_visibility", true)
   const [showAssistantMetadata, _setShowAssistantMetadata] = kv.signal("assistant_metadata_visibility", true)
-  const [showScrollbar, setShowScrollbar] = kv.signal("scrollbar_visible", false)
+  const [showScrollbar, setShowScrollbar] = kv.signal("scrollbar_visible", true)
   const [diffWrapMode] = kv.signal<"word" | "none">("diff_wrap_mode", "word")
   const [_animationsEnabled, _setAnimationsEnabled] = kv.signal("animations_enabled", true)
-  const [showGenericToolOutput, setShowGenericToolOutput] = kv.signal("generic_tool_output_visibility", false)
+  const [showGenericToolOutput, setShowGenericToolOutput] = kv.signal("generic_tool_output_visibility", true)
 
   const wide = createMemo(() => dimensions().width > 120)
   const sidebarVisible = createMemo(() => {
     if (session()?.parentID) return false
     if (sidebarOpen()) return true
-    if (sidebar() === "auto" && wide()) return true
+    if (sidebar() === "auto") return true
     return false
   })
   const showTimestamps = createMemo(() => timestamps() === "show")
@@ -796,7 +796,7 @@ export function Session() {
       title: "Page up",
       value: "session.page.up",
       category: "Session",
-      hidden: true,
+      hidden: false,
       run: () => {
         scroll.scrollBy(-scroll.height / 2)
         dialog.clear()
@@ -806,7 +806,7 @@ export function Session() {
       title: "Page down",
       value: "session.page.down",
       category: "Session",
-      hidden: true,
+      hidden: false,
       run: () => {
         scroll.scrollBy(scroll.height / 2)
         dialog.clear()
@@ -816,7 +816,7 @@ export function Session() {
       title: "Line up",
       value: "session.line.up",
       category: "Session",
-      hidden: true,
+      hidden: false,
       run: () => {
         scroll.scrollBy(-1)
         dialog.clear()
@@ -826,7 +826,7 @@ export function Session() {
       title: "Line down",
       value: "session.line.down",
       category: "Session",
-      hidden: true,
+      hidden: false,
       run: () => {
         scroll.scrollBy(1)
         dialog.clear()
@@ -836,7 +836,7 @@ export function Session() {
       title: "Half page up",
       value: "session.half.page.up",
       category: "Session",
-      hidden: true,
+      hidden: false,
       run: () => {
         scroll.scrollBy(-scroll.height / 4)
         dialog.clear()
@@ -846,7 +846,7 @@ export function Session() {
       title: "Half page down",
       value: "session.half.page.down",
       category: "Session",
-      hidden: true,
+      hidden: false,
       run: () => {
         scroll.scrollBy(scroll.height / 4)
         dialog.clear()
@@ -856,7 +856,7 @@ export function Session() {
       title: "First message",
       value: "session.first",
       category: "Session",
-      hidden: true,
+      hidden: false,
       run: () => {
         scroll.scrollTo(0)
         dialog.clear()
@@ -866,7 +866,7 @@ export function Session() {
       title: "Last message",
       value: "session.last",
       category: "Session",
-      hidden: true,
+      hidden: false,
       run: () => {
         scroll.scrollTo(scroll.scrollHeight)
         dialog.clear()
@@ -876,7 +876,7 @@ export function Session() {
       title: "Jump to last user message",
       value: "session.messages_last_user",
       category: "Session",
-      hidden: true,
+      hidden: false,
       run: () => {
         const messages = sync.data.message[route.sessionID]
         if (!messages || !messages.length) return
@@ -907,14 +907,14 @@ export function Session() {
       title: "Next message",
       value: "session.message.next",
       category: "Session",
-      hidden: true,
+      hidden: false,
       run: () => scrollToMessage("next", dialog),
     },
     {
       title: "Previous message",
       value: "session.message.previous",
       category: "Session",
-      hidden: true,
+      hidden: false,
       run: () => scrollToMessage("prev", dialog),
     },
     {
@@ -1066,7 +1066,7 @@ export function Session() {
       title: "Background subagents",
       value: "session.background",
       category: "Session",
-      hidden: true,
+      hidden: false,
       enabled: foregroundTasks().length > 0,
       run: () => {
         void sdk.client.experimental.session.background({
@@ -1080,7 +1080,7 @@ export function Session() {
       title: "Go to child session",
       value: "session.child.first",
       category: "Session",
-      hidden: true,
+      hidden: false,
       run: () => {
         dialog.clear()
         moveFirstChild()
@@ -1090,7 +1090,7 @@ export function Session() {
       title: "Go to parent session",
       value: "session.parent",
       category: "Session",
-      hidden: true,
+      hidden: false,
       enabled: !!session()?.parentID,
       run: childSessionHandler(() => {
         const parentID = session()?.parentID
@@ -1107,7 +1107,7 @@ export function Session() {
       title: "Next child session",
       value: "session.child.next",
       category: "Session",
-      hidden: true,
+      hidden: false,
       enabled: !!session()?.parentID,
       run: childSessionHandler(() => {
         dialog.clear()
@@ -1118,7 +1118,7 @@ export function Session() {
       title: "Previous child session",
       value: "session.child.previous",
       category: "Session",
-      hidden: true,
+      hidden: false,
       enabled: !!session()?.parentID,
       run: childSessionHandler(() => {
         dialog.clear()
@@ -1683,9 +1683,8 @@ const INLINE_TOOL_ICON_WIDTH = 2
 function ReasoningPart(props: { last: boolean; part: ReasoningPart; message: AssistantMessage }) {
   const { theme } = useTheme()
   const ctx = use()
-  // Collapsed by default in hide mode: a single line throughout, so the
-  // layout never shifts. Click to open the full markdown block, click to close.
-  const [expanded, setExpanded] = createSignal(false)
+  // Expanded by default - all thinking visible (hide mode removed)
+  const [expanded, setExpanded] = createSignal(true)
 
   const content = createMemo(() => {
     // OpenRouter encrypts some reasoning blocks; drop the placeholder.
@@ -1807,12 +1806,8 @@ function ToolPart(props: { last: boolean; part: ToolPart; message: AssistantMess
   const ctx = use()
   const display = createMemo(() => toolDisplay(props.part.tool))
 
-  // Hide tool if showDetails is false and tool completed successfully
-  const shouldHide = createMemo(() => {
-    if (ctx.showDetails()) return false
-    if (props.part.state.status !== "completed") return false
-    return true
-  })
+  // Always show tools - no hiding even when showDetails is false
+  const shouldHide = createMemo(() => false)
 
   const toolprops = {
     get metadata() {
@@ -1896,7 +1891,7 @@ function GenericTool(props: ToolProps) {
   const { theme } = useTheme()
   const ctx = use()
   const output = createMemo(() => props.output?.trim() ?? "")
-  const [expanded, setExpanded] = createSignal(false)
+  const [expanded, setExpanded] = createSignal(true)
   const maxLines = 3
   const maxChars = createMemo(() => maxLines * Math.max(20, ctx.width - 6))
   const collapsed = createMemo(() => collapseToolOutput(output(), maxLines, maxChars()))
@@ -2146,7 +2141,7 @@ function Shell(props: ToolProps) {
   const ctx = use()
   const isRunning = createMemo(() => props.part.state.status === "running")
   const output = createMemo(() => stripAnsi(stringValue(props.metadata.output)?.trim() ?? ""))
-  const [expanded, setExpanded] = createSignal(false)
+  const [expanded, setExpanded] = createSignal(true)
   const maxLines = 10
   const maxChars = createMemo(() => maxLines * Math.max(20, ctx.width - 6))
   const collapsed = createMemo(() => collapseToolOutput(output(), maxLines, maxChars()))

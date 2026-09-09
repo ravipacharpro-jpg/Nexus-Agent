@@ -83,7 +83,7 @@ export function DialogWorkspaceFileChanges(props: {
       <scrollbox
         height={height()}
         backgroundColor={theme.backgroundElement}
-        scrollbarOptions={{ visible: false }}
+        scrollbarOptions={{ visible: true }}
         scrollAcceleration={scrollAcceleration()}
       >
         <For each={props.files}>

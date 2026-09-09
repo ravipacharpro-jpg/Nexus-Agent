@@ -33,7 +33,7 @@ export function useThinkingMode() {
   // The KVProvider only renders children once kv.ready, so reads here are safe.
   const hadStored = kv.get("thinking_mode") !== undefined
   const legacy = kv.get("thinking_visibility")
-  const [stored, setStored] = kv.signal<ThinkingMode>("thinking_mode", "hide")
+  const [stored, setStored] = kv.signal<ThinkingMode>("thinking_mode", "show")
 
   // The kv signal exposes its setter typed as `Setter<T>` which carries Solid's
   // overload set; passing an updater fn through a property access loses the
@@ -47,17 +47,17 @@ export function useThinkingMode() {
 
   // Preserve previous experience for users who had explicitly toggled the
   // legacy `thinking_visibility` boolean. First-time users (no legacy key)
-  // get the new "hide" default (collapsed thinking).
+  // get the new "show" default (expanded thinking - all visible).
   if (!hadStored) {
     if (legacy === true) set("show")
-    else if (legacy === false) set("hide")
+    else if (legacy === false) set("show")
   }
 
-  if ((stored() as string) === "minimal") set("hide")
+  if ((stored() as string) === "minimal") set("show")
 
   const mode = createMemo<ThinkingMode>(() => {
     const value = stored()
-    return isThinkingMode(value) ? value : "hide"
+    return isThinkingMode(value) ? value : "show"
   })
 
   return {

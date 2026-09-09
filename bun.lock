@@ -29,7 +29,7 @@
     },
     "packages/app": {
       "name": "@nexus-ai/app",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "@corvu/drawer": "catalog:",
         "@dnd-kit/abstract": "0.5.0",
@@ -113,7 +113,7 @@
     },
     "packages/cli": {
       "name": "@nexus-ai/cli",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "bin": {
         "lildax": "./bin/lildax.cjs",
       },
@@ -161,7 +161,7 @@
     },
     "packages/codemode": {
       "name": "@nexus-ai/codemode",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "acorn": "8.15.0",
         "effect": "catalog:",
@@ -175,7 +175,7 @@
     },
     "packages/console/app": {
       "name": "@nexus-ai/console-app",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "@cloudflare/vite-plugin": "1.15.2",
         "@ibm/plex": "6.4.1",
@@ -211,7 +211,7 @@
     },
     "packages/console/core": {
       "name": "@nexus-ai/console-core",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "@aws-sdk/client-sts": "3.782.0",
         "@jsx-email/render": "1.1.1",
@@ -238,7 +238,7 @@
     },
     "packages/console/function": {
       "name": "@nexus-ai/console-function",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "@ai-sdk/anthropic": "3.0.82",
         "@ai-sdk/openai": "3.0.48",
@@ -260,7 +260,7 @@
     },
     "packages/console/mail": {
       "name": "@nexus-ai/console-mail",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "@jsx-email/all": "2.2.3",
         "@jsx-email/cli": "1.4.3",
@@ -284,7 +284,7 @@
     },
     "packages/console/support": {
       "name": "@nexus-ai/console-support",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "@cloudflare/vite-plugin": "1.15.2",
         "@nexus-ai/console-core": "workspace:*",
@@ -304,7 +304,7 @@
     },
     "packages/core": {
       "name": "@nexus-ai/core",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "bin": {
         "nexus": "./bin/nexus",
       },
@@ -398,7 +398,7 @@
     },
     "packages/desktop": {
       "name": "@nexus-ai/desktop",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "@zip.js/zip.js": "2.7.62",
         "drizzle-orm": "catalog:",
@@ -452,7 +452,7 @@
     },
     "packages/effect-drizzle-sqlite": {
       "name": "@nexus-ai/effect-drizzle-sqlite",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "drizzle-orm": "catalog:",
         "effect": "catalog:",
@@ -466,7 +466,7 @@
     },
     "packages/effect-sqlite-node": {
       "name": "@nexus-ai/effect-sqlite-node",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "effect": "catalog:",
       },
@@ -478,7 +478,7 @@
     },
     "packages/enterprise": {
       "name": "@nexus-ai/enterprise",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "@hono/standard-validator": "catalog:",
         "@nexus-ai/core": "workspace:*",
@@ -510,7 +510,7 @@
     },
     "packages/function": {
       "name": "@nexus-ai/function",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "@octokit/auth-app": "8.0.1",
         "@octokit/rest": "catalog:",
@@ -534,7 +534,7 @@
     },
     "packages/http-recorder": {
       "name": "@nexus-ai/http-recorder",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "@effect/platform-node": "4.0.0-beta.83",
         "@effect/platform-node-shared": "4.0.0-beta.83",
@@ -565,7 +565,7 @@
     },
     "packages/llm": {
       "name": "@nexus-ai/llm",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "@nexus-ai/schema": "workspace:*",
         "@smithy/eventstream-codec": "4.2.14",
@@ -592,7 +592,7 @@
     },
     "packages/nexus": {
       "name": "nexus",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "bin": {
         "nexus": "./bin/nexus",
       },
@@ -731,7 +731,7 @@
     },
     "packages/plugin": {
       "name": "@nexus-ai/plugin",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "@ai-sdk/provider": "3.0.8",
         "@nexus-ai/sdk": "workspace:*",
@@ -807,7 +807,7 @@
     },
     "packages/sdk/js": {
       "name": "@nexus-ai/sdk",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "cross-spawn": "catalog:",
       },
@@ -822,7 +822,7 @@
     },
     "packages/server": {
       "name": "@nexus-ai/server",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "@nexus-ai/core": "workspace:*",
         "@nexus-ai/protocol": "workspace:*",
@@ -837,7 +837,7 @@
     },
     "packages/session-ui": {
       "name": "@nexus-ai/session-ui",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "@kobalte/core": "catalog:",
         "@nexus-ai/core": "workspace:*",
@@ -877,7 +877,7 @@
     },
     "packages/slack": {
       "name": "@nexus-ai/slack",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "@nexus-ai/sdk": "workspace:*",
         "@slack/bolt": "^3.17.1",
@@ -890,7 +890,7 @@
     },
     "packages/stats/app": {
       "name": "@nexus-ai/stats-app",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "@ibm/plex": "6.4.1",
         "@kobalte/core": "catalog:",
@@ -924,7 +924,7 @@
     },
     "packages/stats/core": {
       "name": "@nexus-ai/stats-core",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "@aws-sdk/client-athena": "3.933.0",
         "@planetscale/database": "1.19.0",
@@ -943,7 +943,7 @@
     },
     "packages/stats/server": {
       "name": "@nexus-ai/stats-server",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "@aws-sdk/client-firehose": "3.933.0",
         "@effect/platform-node": "catalog:",
@@ -1011,7 +1011,7 @@
     },
     "packages/tui": {
       "name": "@nexus-ai/tui",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "@nexus-ai/core": "workspace:*",
         "@nexus-ai/plugin": "workspace:*",
@@ -1038,7 +1038,7 @@
     },
     "packages/ui": {
       "name": "@nexus-ai/ui",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "@kobalte/core": "catalog:",
         "@pierre/diffs": "catalog:",
@@ -1097,7 +1097,7 @@
     },
     "packages/web": {
       "name": "@nexus-ai/web",
-      "version": "0.1.59",
+      "version": "0.1.66",
       "dependencies": {
         "@astrojs/cloudflare": "12.6.3",
         "@astrojs/markdown-remark": "6.3.1",
